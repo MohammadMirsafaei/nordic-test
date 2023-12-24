@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: nordic-php:latest
+        container_name: nordic-php
+        volumes:
+            - ./:/var/www
+        networks:
+            - nordic-network
+    webserver:
+        image: nginx:1.25-alpine
+        container_name: nordic-webserver
+        ports:
+            - 3030:80
+        volumes:
+            - ./:/var/www
+            - ./nginx:/etc/nginx/conf.d
+        networks:
+            - audioapp-network
+    database:
+        image: mysql:8.0
+        container_name: nordic-database
+        volumes:
+            - ./data/mysql:/var/lib/mysql
+        environment:
+            MYSQL_DATABASE: app
+            MYSQL_ROOT_PASSWORD: app
+            MYSQL_PASSWORD: app
+            MYSQL_USER: app
+        networks:
+            - nordic-network
+    phpmyadmin:
+        image: phpmyadmin:5.1.1-apache
+        container_name: nordic-pmy
+        environment:
+            MYSQL_ROOT_PASSWORD: app
+            PMA_USER: app
+            PMA_PASSWORD: app
+            PMA_HOST: database
+        ports:
+            - "3031:80"
+        networks:
+            - nordic-network
+
+networks:
+    nordic-network:
+        name: nordic-network
+        driver: bridge
