@@ -20,7 +20,7 @@ services:
             - ./:/var/www
             - ./nginx:/etc/nginx/conf.d
         networks:
-            - audioapp-network
+            - nordic-network
     database:
         image: mysql:8.0
         container_name: nordic-database
