@@ -2,6 +2,8 @@
 
 namespace App\Repositories;
 
+use App\DTOs\TransactionDTO;
+use App\DTOs\TransactionToCreateDTO;
 use App\DTOs\WalletDTO;
 
 interface WalletRepositoryInterface
@@ -10,5 +12,5 @@ interface WalletRepositoryInterface
 
     public function getByUserId(int $userId): ?WalletDTO;
 
-    public function updateBalanceById(int $id, float $amount): void;
+    public function updateBalanceByTransaction(TransactionToCreateDTO $transactionDTO, float $amount): ?TransactionDTO;
 }

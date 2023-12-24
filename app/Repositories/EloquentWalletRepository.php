@@ -2,7 +2,11 @@
 
 namespace App\Repositories;
 
+use App\DTOs\TransactionDTO;
+use App\DTOs\TransactionToCreateDTO;
 use App\DTOs\WalletDTO;
+use App\Enums\TransactionTypeEnum;
+use App\Models\Transaction;
 use App\Models\Wallet;
 use Illuminate\Support\Facades\DB;
 
@@ -40,15 +44,34 @@ class EloquentWalletRepository implements WalletRepositoryInterface
         );
     }
 
-    public function updateBalanceById(int $id, float $amount): void
+    public function updateBalanceByTransaction(TransactionToCreateDTO $transactionDTO, float $amount): ?TransactionDTO
     {
-        DB::transaction(function() use ($id, $amount) {
-            $wallet = Wallet::lockForUpdate()->find($id);
+        return DB::transaction(function() use ($transactionDTO, $amount) {
+            $wallet = Wallet::lockForUpdate()->where('user_id', $transactionDTO->userId)->first();
+
             if (!is_null($wallet)) {
+                $transaction = new Transaction([
+                    'amount' => $transactionDTO->amount,
+                    'type' => $transactionDTO->type,
+                ]);
+
+                $wallet->transactions()->save($transaction);
+
                 $wallet->update([
                     'balance' => $wallet->balance + $amount,
                 ]);
+
+                return new TransactionDTO(
+                    $transaction->id,
+                    $transaction->amount,
+                    $transaction->type,
+                    $transaction->reference_id,
+                    $transaction->wallet_id,
+                    $transaction->created_at,
+                    $transaction->updated_at,
+                );
             }
+            return null;
         });
     }
 
