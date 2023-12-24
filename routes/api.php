@@ -15,4 +15,4 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/get-balance', [WalletController::class, 'getBalance'])->name('get-balance');
+Route::post('/get-balance', [WalletController::class, 'getBalance'])->name('get-balance');

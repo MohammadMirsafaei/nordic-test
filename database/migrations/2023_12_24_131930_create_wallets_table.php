@@ -15,7 +15,7 @@ return new class extends Migration
         Schema::create('wallets', function (Blueprint $table) {
             $table->id();
             $table->decimal('balance', 10, 2)->default(0);
-            $table->foreignIdFor(User::class);
+            $table->foreignIdFor(User::class)->unique();
             $table->timestamps();
         });
     }
