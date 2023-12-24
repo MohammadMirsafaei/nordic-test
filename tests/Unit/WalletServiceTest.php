@@ -2,7 +2,10 @@
 
 namespace Tests\Unit;
 
+use App\DTOs\TransactionDTO;
+use App\DTOs\TransactionToCreateDTO;
 use App\DTOs\WalletDTO;
+use App\Enums\TransactionTypeEnum;
 use App\Exceptions\WalletNotFoundException;
 use App\Repositories\EloquentWalletRepository;
 use App\Repositories\WalletRepositoryInterface;
@@ -13,7 +16,9 @@ use Tests\TestCase;
 
 class WalletServiceTest extends TestCase
 {
-    private array $data;
+    private array $wallets;
+
+    private array $transactions;
 
     private WalletService $service;
 
@@ -21,7 +26,7 @@ class WalletServiceTest extends TestCase
     {
         parent::setUp();
 
-        $this->data = [
+        $this->wallets = [
             1 => new WalletDTO(
                 1,
                 1000.00,
@@ -45,14 +50,38 @@ class WalletServiceTest extends TestCase
             ),
         ];
 
+        $this->transactions = [];
+
         $this->app->bind(WalletRepositoryInterface::class, function() {
             return $this->mock(EloquentWalletRepository::class, function (MockInterface $mock) {
                 $mock->shouldReceive('getById')->andReturnUsing(function ($id) {
-                    return $this->data[$id] ?? null;
+                    return $this->wallets[$id] ?? null;
                 });
 
                 $mock->shouldReceive('getByUserId')->andReturnUsing(function ($id) {
-                    return $this->data[$id] ?? null;
+                    return $this->wallets[$id] ?? null;
+                });
+
+                $mock->shouldReceive('updateBalanceByTransaction')
+                ->andReturnUsing(function (TransactionToCreateDTO $transactionDTO, float $amount) {
+                    $old = $this->wallets[$transactionDTO->userId];
+                    $this->wallets[$transactionDTO->userId] = new WalletDTO(
+                        $old->id,
+                        $old->balance + $amount,
+                        $old->userId,
+                        $old->createdAt,
+                        $old->updatedAt,
+                    );
+
+                    $this->transactions[] = new TransactionDTO(
+                        1,
+                        $amount > 0 ? $amount : $amount * -1,
+                        TransactionTypeEnum::fromAmount($amount),
+                        $amount > 0 ? 'CRED19648984' : 'DEB12124123',
+                        $transactionDTO->userId,
+                        now(),
+                        now(),
+                    );
                 });
             });
         });
@@ -92,5 +121,20 @@ class WalletServiceTest extends TestCase
         $this->service->getWalletByUserId(5);
     }
 
+    /**
+     * @depends testGetWalletByUserId
+     */
+    public function testUpdateBalanceByUserId(): void
+    {
+        $this->service->updateBalanceByUserId(2, -200);
+        $this->service->updateBalanceByUserId(2, -100);
+        $this->service->updateBalanceByUserId(2, 100);
 
+        $this->assertEquals(300.00, $this->service->getWalletByUserId(2)->balance);
+        $this->assertCount(3, $this->transactions);
+        $this->assertEquals(200, $this->transactions[0]->amount);
+        $this->assertEquals(TransactionTypeEnum::DEBIT, $this->transactions[0]->type);
+        $this->assertEquals(100, $this->transactions[1]->amount);
+        $this->assertEquals(100, $this->transactions[2]->amount);
+    }
 }

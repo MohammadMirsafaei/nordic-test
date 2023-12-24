@@ -2,7 +2,10 @@
 
 namespace App\Services;
 
+use App\DTOs\TransactionDTO;
+use App\DTOs\TransactionToCreateDTO;
 use App\DTOs\WalletDTO;
+use App\Enums\TransactionTypeEnum;
 use App\Exceptions\WalletNotFoundException;
 use App\Repositories\WalletRepositoryInterface;
 
@@ -38,5 +41,17 @@ class WalletService
         }
 
         return $wallet;
+    }
+
+    public function updateBalanceByUserId(int $userId, float $amount): ?TransactionDTO
+    {
+        return $this->walletRepository->updateBalanceByTransaction(
+            new TransactionToCreateDTO(
+                $amount > 0 ? $amount : $amount * -1,
+                TransactionTypeEnum::fromAmount($amount),
+                $userId,
+            ),
+            $amount
+        );
     }
 }

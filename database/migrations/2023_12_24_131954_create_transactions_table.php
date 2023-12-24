@@ -16,7 +16,7 @@ return new class extends Migration
             $table->id();
             $table->decimal('amount', 10, 2);
             $table->enum('type', ['credit', 'debit']);
-            $table->string('reference_id')->unique();
+            $table->string('reference_id')->unique()->nullable();
             $table->foreignIdFor(Wallet::class);
             $table->timestamps();
         });

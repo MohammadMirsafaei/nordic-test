@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\WalletNotFoundException;
 use App\Helpers\ResponseHelper;
+use App\Http\Requests\AddMoneyRequest;
 use App\Http\Requests\GetBalanceRequest;
+use App\Http\Resources\AddMoneyResource;
 use App\Http\Resources\GetBalanceResource;
 use App\Services\WalletService;
 use Illuminate\Http\JsonResponse;
@@ -35,6 +37,20 @@ class WalletController extends Controller
         catch (\Throwable $th) {
             Log::error(
                 "Unhandled expection in getting balance for user: {$request->user_id}",
+                ['exception' => $th]
+            );
+            return ResponseHelper::serverInternalError();
+        }
+    }
+
+    public function addMoney(AddMoneyRequest $request): JsonResponse
+    {
+        try {
+            $transaction = $this->walletService->updateBalanceByUserId($request->user_id, $request->amount);
+            return response()->json(new AddMoneyResource($transaction));
+        } catch (\Throwable $th) {
+            Log::error(
+                "Unhandled expection in adding money for user: {$request->user_id}",
                 ['exception' => $th]
             );
             return ResponseHelper::serverInternalError();

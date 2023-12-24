@@ -16,3 +16,6 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::post('/get-balance', [WalletController::class, 'getBalance'])->name('get-balance');
+
+Route::post('/add-money', [WalletController::class, 'addMoney'])->name('add-money');
+
